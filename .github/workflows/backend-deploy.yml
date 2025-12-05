@@ -44,21 +44,21 @@ jobs:
       - name: Deploy to Cloud Run
         run: |
           gcloud run deploy email-backend \
+            --project=email-management-449416 \
             --image=asia-south1-docker.pkg.dev/email-management-449416/email-backend-repo/email-backend:latest \
             --platform=managed \
             --region=asia-south1 \
             --allow-unauthenticated \
             --service-account=767837784755-compute@developer.gserviceaccount.com \
             --port=3000 \
-            --set-env-vars JWT_SECRET="${{ secrets.JWT_SECRET }}" \
-            --set-env-vars JWT_REFRESH_SECRET="${{ secrets.JWT_REFRESH_SECRET }}" \
-            --set-env-vars EMAIL_USER="${{ secrets.EMAIL_USER }}" \
-            --set-env-vars EMAIL_PASS="${{ secrets.EMAIL_PASS }}" \
-            --set-env-vars CLIENT_ID="${{ secrets.CLIENT_ID }}" \
-            --set-env-vars CLIENT_SECRET="${{ secrets.CLIENT_SECRET }}" \
-            --set-env-vars REFRESH_TOKEN="${{ secrets.REFRESH_TOKEN }}" \
-            --set-env-vars REDIRECT_URI="${{ secrets.REDIRECT_URI }}" \
-            --set-env-vars BASE_URL="${{ secrets.BASE_URL }}" \
-            --set-env-vars GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}" \
-            --set-env-vars GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}" \
-            --set-env-vars GOOGLE_REDIRECT_URI="${{ secrets.GOOGLE_REDIRECT_URI }}"
+            --set-secrets BASE_URL=BASE_URL:latest \
+            --set-secrets GOOGLE_REDIRECT_URI=GOOGLE_REDIRECT_URI:latest \
+            --set-secrets JWT_SECRET=JWT_SECRET:latest \
+            --set-secrets JWT_REFRESH_SECRET=JWT_REFRESH_SECRET:latest \
+            --set-secrets EMAIL_USER=EMAIL_USER:latest \
+            --set-secrets EMAIL_PASS=EMAIL_PASS:latest \
+            --set-secrets CLIENT_ID=CLIENT_ID:latest \
+            --set-secrets CLIENT_SECRET=CLIENT_SECRET:latest \
+            --set-secrets REFRESH_TOKEN=REFRESH_TOKEN:latest \
+            --set-secrets GOOGLE_CLIENT_ID=GOOGLE_CLIENT_ID:latest \
+            --set-secrets GOOGLE_CLIENT_SECRET=GOOGLE_CLIENT_SECRET:latest
