@@ -1,15 +1,20 @@
 name: Backend CI/CD
 
-# Trigger workflow on push to main branch
+# Trigger workflow on push to main branch, but only for back-end changes
 on:
   push:
     branches:
       - main
+    paths:
+      - 'back-end/**'
 
 jobs:
   deploy-backend:
     name: Deploy Backend to Cloud Run
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./back-end
 
     steps:
       # Step 1: Checkout code

@@ -7,17 +7,26 @@ const cookieParser = require('cookie-parser');
 const cors = require('cors');
 const multer = require('multer');
 
-
+// DEBUG: Log the Google Redirect URI on startup
+console.log('---------------------------------------------------');
+console.log('SERVER STARTUP CONFIGURATION:');
+console.log('GOOGLE_CLIENT_ID:', process.env.GOOGLE_CLIENT_ID ? 'Set' : 'Not Set');
+console.log('GOOGLE_REDIRECT_URI:', process.env.GOOGLE_REDIRECT_URI);
+console.log('JWT_SECRET:', process.env.JWT_SECRET ? 'Set' : 'Not Set');
+console.log('FRONTEND_URL:', process.env.FRONTEND_URL);
+console.log('---------------------------------------------------');
 
 // Initialize express app
 const app = express();
+app.set('trust proxy', 1); // Trust first proxy (Cloud Run / Load Balancer)
+app.set('etag', false); // Disable ETags to prevent 304 Not Modified responses
 const upload = multer({ dest: 'uploads/' });
 
 // Middleware setup
 app.use(
   cors({
     origin: [
-      process.env.FRONTEND_URL, 
+      process.env.BASE_URL, 
       'http://localhost:3001', 
       'https://email-frontend-767837784755.asia-south1.run.app'
     ],

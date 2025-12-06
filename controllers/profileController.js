@@ -1,15 +1,15 @@
-require('dotenv').config();
 const express = require('express');
 const router = express.Router();
 const { db, admin } = require('../config/firebase'); 
 const authenticateToken = require('../middlewares/authMiddleware');
 const { google } = require('googleapis');
+const jwt = require('jsonwebtoken');
 
 // Google OAuth2 Client
 const oauth2Client = new google.auth.OAuth2(
-  process.env.GOOGLE_CLIENT_ID,
-  process.env.GOOGLE_CLIENT_SECRET,
-  process.env.GOOGLE_REDIRECT_URI
+  process.env.GOOGLE_CLIENT_ID ? process.env.GOOGLE_CLIENT_ID.trim() : '',
+  process.env.GOOGLE_CLIENT_SECRET ? process.env.GOOGLE_CLIENT_SECRET.trim() : '',
+  process.env.GOOGLE_REDIRECT_URI ? process.env.GOOGLE_REDIRECT_URI.trim() : ''
 );
 
 // Fetch user profile
@@ -84,48 +84,107 @@ router.put('/user/profile', authenticateToken, async (req, res) => {
 });
 
 // Step 1: Generate Google Auth URL
-router.get('/auth/google', authenticateToken, (req, res) => {
+// CHANGED ROUTE to bust cache
+router.get('/auth/google/init', authenticateToken, (req, res) => {
   const userId = req.userId;
   
+  // AGGRESSIVE CACHE BUSTING
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+  res.set('Surrogate-Control', 'no-store');
+  
+  console.error('[APP-DEBUG] Generating Auth URL for User:', userId);
+  console.error('[APP-DEBUG] JWT_SECRET Present:', !!process.env.JWT_SECRET);
+
   if (!userId) {
       return res.status(401).json({ message: 'Unauthorized. Please log in.' });
   }
 
-  // Set user ID in a cookie
-  res.cookie('googleAuthUserId', userId, {
-      httpOnly: true,  // Prevent access from JavaScript
-      secure: process.env.NODE_ENV === 'production', // Secure flag for HTTPS
-      sameSite: 'Lax', // Prevent CSRF attacks
-      maxAge: 10 * 60 * 1000 // Expire in 10 minutes
-  });
+  try {
+    // Generate a secure state token containing the userId
+    const state = jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    console.error('[APP-DEBUG] Generated State Token:', state);
 
-  // Generate Google OAuth2 URL
-  const authUrl = oauth2Client.generateAuthUrl({
-      access_type: 'offline',
-      scope: ['https://www.googleapis.com/auth/gmail.send'],
-      prompt: 'consent',
-  });
+    // BACKUP: Set user ID in a cookie
+    res.cookie('googleAuthUserId', userId, {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'None',
+        maxAge: 10 * 60 * 1000
+    });
 
-  res.json({ authUrl });
+    // Generate Google OAuth2 URL
+    let authUrl = oauth2Client.generateAuthUrl({
+        access_type: 'offline',
+        scope: ['https://www.googleapis.com/auth/gmail.send'],
+        prompt: 'consent',
+        state: state
+    });
+
+    // FORCE STATE PARAMETER (Manual Override)
+    if (!authUrl.includes('state=')) {
+        console.error('[APP-DEBUG] CRITICAL: Library failed to add state. Appending manually.');
+        authUrl += `&state=${state}`;
+    }
+
+    console.error('[APP-DEBUG] Final Auth URL:', authUrl);
+
+    // Return timestamp to force response body change
+    res.json({ authUrl, timestamp: Date.now() });
+  } catch (error) {
+    console.error('[APP-DEBUG] Error generating auth URL:', error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
 });
 
 
 // Step 2: Handle Google OAuth2 Callback
 router.get('/auth/google/callback', async (req, res) => {
-  const { code } = req.query;
-  const userId = req.cookies.googleAuthUserId; // Retrieve from cookies
+  console.error('[APP-DEBUG] Callback received');
+  console.error('[APP-DEBUG] Full URL:', req.originalUrl);
+  console.error('[APP-DEBUG] Query Params:', JSON.stringify(req.query));
 
-  
-    if (!code) {
-      return res.status(400).json({ message: 'Authorization code is required.' });
+  const { code, state } = req.query;
+
+  if (!code) {
+    console.error('[APP-DEBUG] No code provided');
+    return res.status(400).json({ message: 'Authorization code is required.' });
+  }
+
+  let userId;
+
+  // Verify the state token to retrieve userId
+  if (state) {
+    console.error('[APP-DEBUG] State parameter found, verifying...');
+    try {
+      const decoded = jwt.verify(state, process.env.JWT_SECRET);
+      userId = decoded.userId;
+      console.error('[APP-DEBUG] State verified, userId:', userId);
+    } catch (err) {
+      console.error('[APP-DEBUG] Invalid state token:', err.message);
+      return res.status(400).json({ message: 'Invalid or expired state parameter.' });
     }
+  } else {
+    console.error('[APP-DEBUG] No state parameter, falling back to cookies');
+    userId = req.cookies.googleAuthUserId;
+    console.error('[APP-DEBUG] Cookie userId:', userId);
+  }
   
-    if (!userId) {
+  if (!userId) {
+      console.error('[APP-DEBUG] User ID missing from both state and cookies');
       return res.status(401).json({ message: 'User not found. Please log in again.' });
   }
 
   try {
+      console.error('[APP-DEBUG] Attempting to exchange code for tokens...');
+      console.error('[APP-DEBUG] Configured Redirect URI:', oauth2Client.redirectUri);
+      console.error('[APP-DEBUG] Client ID (first 5):', process.env.GOOGLE_CLIENT_ID ? process.env.GOOGLE_CLIENT_ID.substring(0, 5) : 'MISSING');
+      console.error('[APP-DEBUG] Client Secret length:', process.env.GOOGLE_CLIENT_SECRET ? process.env.GOOGLE_CLIENT_SECRET.length : 'MISSING');
+      
       const { tokens } = await oauth2Client.getToken(code);
+      console.error('[APP-DEBUG] Tokens received successfully');
+      
       oauth2Client.setCredentials(tokens);
 
       // Save tokens to Firestore
@@ -133,10 +192,11 @@ router.get('/auth/google/callback', async (req, res) => {
           googleTokens: JSON.stringify(tokens)
       });
 
-      // Clear the cookie after successful authentication
+      // Clear the cookie if it exists
       res.clearCookie('googleAuthUserId');
   
-      res.redirect('http://localhost:3001/dashboard');
+      const frontendUrl = process.env.BASE_URL || 'https://email-frontend-767837784755.asia-south1.run.app';
+      res.redirect(`${frontendUrl}/dashboard`);
     } catch (error) {
       console.error('Error during Google OAuth2 callback:', error);
       res.status(500).json({ message: 'Failed to connect Google account.' });
