@@ -14,15 +14,22 @@ const app = express();
 const upload = multer({ dest: 'uploads/' });
 
 // Middleware setup
+app.use(
+  cors({
+    origin: [
+      process.env.FRONTEND_URL, 
+      'http://localhost:3001', 
+      'https://email-frontend-767837784755.asia-south1.run.app'
+    ],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+  })
+);
+app.options('*', cors()); // Enable pre-flight for all routes
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cookieParser());
-app.use(
-  cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3001',
-    credentials: true,
-  })
-);
 app.get('/favicon.ico', (req, res) => res.status(204).end()); // Ignore favicon requests
 
 
