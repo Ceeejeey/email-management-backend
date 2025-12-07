@@ -28,7 +28,8 @@ app.use(
     origin: [
       process.env.BASE_URL, 
       'http://localhost:3001', 
-      'https://email-frontend-767837784755.asia-south1.run.app'
+      'https://email-frontend-767837784755.asia-south1.run.app',
+      'gihanvimukthi.dev'
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
