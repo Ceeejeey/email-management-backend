@@ -49,16 +49,5 @@ jobs:
             --platform=managed \
             --region=asia-south1 \
             --allow-unauthenticated \
-            --service-account=767837784755-compute@developer.gserviceaccount.com \
-            --port=3000 \
-            --set-secrets BASE_URL=BASE_URL:latest \
-            --set-secrets GOOGLE_REDIRECT_URI=GOOGLE_REDIRECT_URI:latest \
-            --set-secrets JWT_SECRET=JWT_SECRET:latest \
-            --set-secrets JWT_REFRESH_SECRET=JWT_REFRESH_SECRET:latest \
-            --set-secrets EMAIL_USER=EMAIL_USER:latest \
-            --set-secrets EMAIL_PASS=EMAIL_PASS:latest \
-            --set-secrets CLIENT_ID=CLIENT_ID:latest \
-            --set-secrets CLIENT_SECRET=CLIENT_SECRET:latest \
-            --set-secrets REFRESH_TOKEN=REFRESH_TOKEN:latest \
-            --set-secrets GOOGLE_CLIENT_ID=GOOGLE_CLIENT_ID:latest \
-            --set-secrets GOOGLE_CLIENT_SECRET=GOOGLE_CLIENT_SECRET:latest
+            --port=3000
+
