@@ -25,13 +25,25 @@ const upload = multer({ dest: 'uploads/' });
 // Middleware setup
 app.use(
   cors({
-    origin: [
-      process.env.BASE_URL, 
-      'http://localhost:3001', 
-      'https://email-frontend-767837784755.asia-south1.run.app',
-      'https://email-frontend-dvzkpvxfrq-as.a.run.app',
-      'https://gihanvimukthi.dev'
-    ],
+    origin: function (origin, callback) {
+      const allowedOrigins = [
+        process.env.BASE_URL, 
+        'http://localhost:3001', 
+        'https://email-frontend-767837784755.asia-south1.run.app',
+        'https://email-frontend-dvzkpvxfrq-as.a.run.app',
+        'https://gihanvimukthi.dev'
+      ];
+      
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+      
+      if (allowedOrigins.indexOf(origin) !== -1) {
+        return callback(null, true);
+      } else {
+        console.log('Blocked by CORS:', origin);
+        return callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
