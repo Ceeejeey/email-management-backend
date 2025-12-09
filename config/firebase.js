@@ -19,7 +19,7 @@ if (!admin.apps.length) {
     // Fallback or instructions
     admin.initializeApp({
         credential: admin.credential.applicationDefault(),
-        projectId: process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT
+        projectId: "email-management-app-c49c1"
     });
   }
 }
