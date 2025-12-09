@@ -28,26 +28,26 @@ jobs:
 
       # Step 4: Configure Docker to use GCP Artifact Registry
       - name: Configure Docker for Artifact Registry
-        run: gcloud auth configure-docker asia-south1-docker.pkg.dev
+        run: gcloud auth configure-docker asia-southeast1-docker.pkg.dev
 
       # Step 5: Build Docker image
       - name: Build Docker image
         run: |
-          docker build -t asia-south1-docker.pkg.dev/email-management-449416/email-backend-repo/email-backend:latest .
+          docker build -t asia-southeast1-docker.pkg.dev/email-management-449416/email-backend-repo/email-backend:latest .
 
       # Step 6: Push Docker image to Artifact Registry
       - name: Push Docker image
         run: |
-          docker push asia-south1-docker.pkg.dev/email-management-449416/email-backend-repo/email-backend:latest
+          docker push asia-southeast1-docker.pkg.dev/email-management-449416/email-backend-repo/email-backend:latest
 
       # Step 7: Deploy Docker image to Cloud Run
       - name: Deploy to Cloud Run
         run: |
           gcloud run deploy email-backend \
             --project=email-management-449416 \
-            --image=asia-south1-docker.pkg.dev/email-management-449416/email-backend-repo/email-backend:latest \
+            --image=asia-southeast1-docker.pkg.dev/email-management-449416/email-backend-repo/email-backend:latest \
             --platform=managed \
-            --region=asia-south1 \
+            --region=asia-southeast1 \
             --allow-unauthenticated \
             --port=3000
 
