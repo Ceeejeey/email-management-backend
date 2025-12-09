@@ -195,7 +195,8 @@ router.get('/auth/google/callback', async (req, res) => {
       // Clear the cookie if it exists
       res.clearCookie('googleAuthUserId');
   
-      const frontendUrl = process.env.BASE_URL || 'https://email-frontend-767837784755.asia-southeast1.run.app';
+      // Prefer FRONTEND_URL from env vars (Terraform), fallback to BASE_URL (Secrets), then hardcoded
+      const frontendUrl = process.env.FRONTEND_URL || process.env.BASE_URL || 'https://email-frontend-767837784755.asia-southeast1.run.app';
       res.redirect(`${frontendUrl}/dashboard`);
     } catch (error) {
       console.error('Error during Google OAuth2 callback:', error);

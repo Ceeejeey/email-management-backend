@@ -28,7 +28,7 @@ const allowedOrigins = [
   'http://localhost:3001', 
   'https://email-frontend-767837784755.asia-south1.run.app',
   'https://email-frontend-dvzkpvxfrq-as.a.run.app',
-  'https://gihanvimukthi.dev'
+  'https://email.management.gihanvimukthi.dev'
 ].filter(Boolean); // Remove undefined/null values
 
 const corsOptions = {
